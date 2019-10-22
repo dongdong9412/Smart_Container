@@ -23,6 +23,10 @@
 //펠티어
 #define Mosfet = 9
 
+//RFID
+#define SS_PIN 53
+#define RST_PIN 49
+
 //DHT11
 #define DHTPIN A8
 #define DHTTYPE DHT11
@@ -49,23 +53,49 @@ byte ondo[] = {
 };
 
 float temperature;              // DTH11 센서 온도 값
-float humidity;                 // DTH11 센서 습도 값 
+float humidity;                 // DTH11 센서 습도 값
 volatile float setTemp = 0.0;            // 로터리 엔코더로 온도 설정할 값
 
 String SetString = "Set Temp:";
 String Thermal = "Temp:";
 String Humidity = "Humidity:";
 
-void MonitorInit();             // LCD 초기 설정 함수
-void UpdateMonitor();           // LCD의 내용이 변경되었을 때 동작
-void encoderAct();              // 엔코더 돌릴때의 동작
-void switchAct();               // 엔코더 스위치 눌렀을 때 동작
+//LOCK
+int pos = 0;
+int tru = 0;
+int count = 0;
+bool door = false;
+char Password[4] = {'1', '2', '3', '4'};
+const byte ROWS = 4; //four rows
+const byte COLS = 3; //three columns
+char keys[ROWS][COLS] = {
+  {'1', '2', '3'},
+  {'4', '5', '6'},
+  {'7', '8', '9'},
+  {'*', '0', '#'}
+};
+byte rowPins[ROWS] = {32, 33, 34, 35}; //connect to the row pinouts of the keypad
+byte colPins[COLS] = {36, 37, 38}; //connect to the column pinouts of the keypad
+Keypad keypad = Keypad( makeKeymap(keys), rowPins, colPins, ROWS, COLS );
+
+
+void Dial_Init();                // Pin 설정 함수
+void Monitor_Init();             // LCD 초기 설정 함수
+void DoorLock_Init();            // 잠금 시스템 설정 함수
+void UpdateMonitor();            // LCD의 내용이 변경되었을 때 동작
+void encoderAct();               // 엔코더 돌릴때의 동작
+void switchAct();                // 엔코더 스위치 눌렀을 때 동작
 
 void setup() {
   // put your setup code here, to run once:
+  
   Serial.begin(9600);
-
-  MonitorInit();
+  pinMode(Mosfet, OUTPUT);
+  GPS.begin(9600);
+  
+  Dial_Init();
+  Monitor_Init();
+  DoorLock_Init();
 
   temperature = 21.0;
   humidity = 76;
@@ -80,37 +110,45 @@ void loop() {
     delay(10);
   }
 
-  #if DEBUG == 1
+#if DEBUG == 1
   if (buff != "") {
     change = true;
     Serial.println(buff);
-    if(buff == "+")
+    if (buff == "+")
       setTemp += 0.1;
-    if(buff == "-")
+    if (buff == "-")
       setTemp -= 0.1;
-    if(buff == "set")
+    if (buff == "set")
       set = !set;
     Serial.println(set);
   }
-  #endif
+#endif
 
   UpdateMonitor();
 }
-void MonitorInit() {
+
+/*       Module Initialization      */
+void Dial_Init() {
   pinMode(encoderInterruptPin, INPUT_PULLUP);
   pinMode(encoderDirectionPin, INPUT_PULLUP);
   pinMode(encoderSwitchPin, INPUT_PULLUP);
-  
+
   attachInterrupt(digitalPinToInterrupt(encoderInterruptPin), encoderAct, FALLING);
   attachInterrupt(digitalPinToInterrupt(encoderSwitchPin), switchAct, FALLING);
-
+}
+void Monitor_Init() {
   Monitor.begin();
   Monitor.backlight();
   Monitor.createChar(0x01, ondo);
-  
+
   change = true;
 }
-
+void DoorLock_Init(){
+  servo.attach(servoPin);
+  SPI.begin();
+  rfid.PCD_Init();
+}
+/*       Module Initialization      */
 
 void UpdateMonitor() {
   if (change) {
