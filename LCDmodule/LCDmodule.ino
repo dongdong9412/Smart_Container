@@ -13,9 +13,9 @@
 #include <Wire.h>
 #include <LiquidCrystal_I2C.h>
 
-#define encoderInterruptPin 2
-#define encoderDirectionPin 4
-#define encoderSwitchPin 3
+#define encoderInterruptPin 19
+#define encoderDirectionPin 17
+#define encoderSwitchPin 18
 
 //SERVO
 #define servoPin 6
@@ -58,9 +58,9 @@ byte ondo[] = {
   B00110
 };
 
-float temperature;              // DTH11 센서 온도 값
-float humidity;                 // DTH11 센서 습도 값
-volatile float setTemp = 0.0;            // 로터리 엔코더로 온도 설정할 값
+volatile float temperature;              // DTH11 센서 온도 값
+volatile float humidity;                 // DTH11 센서 습도 값
+volatile float setTemp = 30.0;            // 로터리 엔코더로 온도 설정할 값
 
 String SetString = "Set Temp:";
 String Thermal = "Temp:";
@@ -118,7 +118,7 @@ void setup() {
   Dial_Init();
   Monitor_Init();
   DoorLock_Init();
-  Timer_Init();
+  // Timer_Init();
 
 }
 
@@ -146,6 +146,13 @@ void loop() {
     Door_sensing();
   else
     ;
+  humidity = dht.readHumidity();
+  temperature = dht.readTemperature();
+  if (temperature > setTemp)
+    cooling = true;
+  else
+    cooling = false;
+  delay(200);
 
   Actuating();
   UpdateMonitor();
@@ -183,12 +190,17 @@ void Timer_Init() {
 
 /* Sensing Function */
 void encoderAct() {
-  if (digitalRead(encoderDirectionPin)) {
-    setTemp += 0.1;
+  Serial.println("enter");
+  if (set) {
+    if (digitalRead(encoderDirectionPin)) {
+      setTemp += 0.1;
+    }
+    else {
+      setTemp -= 0.1;
+    }
   }
-  else {
-    setTemp -= 0.1;
-  }
+  else
+    ;
   delay(100);             // debouncing 제거 용
   change = true;
 }
@@ -202,13 +214,10 @@ void switchAct() {
 void Sensing() {
   sec++;
 
-  humidity = dht.readHumidity();
-  temperature = dht.readTemperature();
+  //  humidity = dht.readHumidity();
+  //  temperature = dht.readTemperature();
 
-  if (temperature > 27)
-    cooling = true;
-  else
-    cooling = false;
+
 
   if (sec == 60) {
     /* GPS read code */
@@ -223,23 +232,54 @@ void Door_sensing() {
   if (key) {
     inputPass = true;
     if (key == Password[index]) {
-    index++;
-    count++;
-  }
+      index++;
+      count++;
+    }
 
-  else if (key != Password[index]) {
-    index++;
-    correct = false;
-  }
+    else if (key != Password[index]) {
+      index++;
+      correct = false;
+    }
 
-  if (key == '#') {
-    correct = false;
-    index = 0;
-    count = 0;
-  }
+    if (key == '#') {
+      correct = false;
+      index = 0;
+      count = 0;
+    }
 
-  if (index == 4) {
-    if (count == 4) {
+    if (key == '*') {
+      if (!rfid.PICC_IsNewCardPresent()) {
+        return;
+      }
+      if (! rfid.PICC_ReadCardSerial()) {
+        return;
+      }
+
+      String content = "";
+
+      for (byte i = 0; i < rfid.uid.size; i++) {
+        content.concat(String(rfid.uid.uidByte[i] < 0x10 ? "0" : " "));
+        content.concat(String(rfid.uid.uidByte[i], HEX));
+      }
+      content.toUpperCase();
+
+      if (content.substring(1) == "76 F5 3B F8" || content.substring(1) == "F902 B9 55") {
+        Monitor.clear();
+        Monitor.setCursor(0, 0);
+        Monitor.print("Authoried access");
+        door_open = true;
+        delay(3000);
+      }
+      else {
+        Monitor.clear();
+        Monitor.setCursor(0, 0);
+        Monitor.print("Access denied");
+        delay(3000);
+      }
+    }
+
+    if (index == 4) {
+      if (count == 4) {
         correct = true;
         door_open = true;
       }
@@ -252,43 +292,12 @@ void Door_sensing() {
     }
   }
 
-  if (!rfid.PICC_IsNewCardPresent()) {
-    return;
-  }
-  if (! rfid.PICC_ReadCardSerial()) {
-    return;
-  }
 
-  String content = "";
-  
-  for (byte i = 0; i < rfid.uid.size; i++) {
-    content.concat(String(rfid.uid.uidByte[i] < 0x10 ? "0" : " "));
-    content.concat(String(rfid.uid.uidByte[i], HEX));
-  }
-  content.toUpperCase();
-
-  if (content.substring(1) == "76 F5 3B F8" || content.substring(1) == "F902 B9 55") {
-    correct = true;
-    door_open = true;
-  }
 }
 /* Sensing Function */
 
 /* Actuator Function */
 void UpdateMonitor() {
-  if (correct) {
-    Monitor.clear();
-    Monitor.setCursor(0, 0);
-    Monitor.print("Authoried access");
-    door_open = true;
-    delay(3000);
-  }
-  else {
-    Monitor.clear();
-    Monitor.setCursor(0, 0);
-    Monitor.print("Access denied");
-    delay(3000);
-  }
   if (reset) {
     Monitor.clear();
     Monitor.setCursor(0, 0);
