@@ -118,7 +118,7 @@ void setup() {
   Dial_Init();
   Monitor_Init();
   DoorLock_Init();
-  // Timer_Init();
+  Timer_Init();
 
 }
 
@@ -148,6 +148,7 @@ void loop() {
     ;
   humidity = dht.readHumidity();
   temperature = dht.readTemperature();
+  change = true;
   if (temperature > setTemp)
     cooling = true;
   else
@@ -212,18 +213,14 @@ void switchAct() {
 }
 
 void Sensing() {
-  sec++;
-
-  //  humidity = dht.readHumidity();
-  //  temperature = dht.readTemperature();
-
-
-
-  if (sec == 60) {
-    /* GPS read code */
-    wrong = 0;
+  if (door_open) {
+    sec++;
   }
 
+  if (sec > 4) {
+    sec = 0;
+    door_open = false;
+  }
 }
 
 void Door_sensing() {
@@ -245,6 +242,8 @@ void Door_sensing() {
       correct = false;
       index = 0;
       count = 0;
+      reset = true;
+      inputPass = false;
     }
 
     if (key == '*') {
@@ -268,13 +267,13 @@ void Door_sensing() {
         Monitor.setCursor(0, 0);
         Monitor.print("Authoried access");
         door_open = true;
-        delay(3000);
+        delay(1500);
       }
       else {
         Monitor.clear();
         Monitor.setCursor(0, 0);
         Monitor.print("Access denied");
-        delay(3000);
+        delay(1500);
       }
     }
 
@@ -289,6 +288,7 @@ void Door_sensing() {
       }
       count = 0;
       index = 0;
+      inputPass = false;
     }
   }
 
@@ -303,12 +303,15 @@ void UpdateMonitor() {
     Monitor.setCursor(0, 0);
     Monitor.print("Password Reset");
     delay(3000);
+    reset = false;
   }
   if (change) {
     if (inputPass) {
       Monitor.clear();
       Monitor.setCursor(0, 0);
-
+      Monitor.print("Password: ");
+      for (int i = 0; i < index; i++)
+        Monitor.print("*");
     }
     else {
       if (set) {
