@@ -64,3 +64,11 @@
    
    ***Keypad 및 RFID 하드웨어 추가***
 
+---
+
+2019-10-25
+
+***LCD module 수정***
+
+***flag 변수 state별로 clear 조건 수정***
+
