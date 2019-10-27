@@ -61,6 +61,8 @@ byte ondo[] = {
 volatile float temperature;              // DTH11 센서 온도 값
 volatile float humidity;                 // DTH11 센서 습도 값
 volatile float setTemp = 30.0;            // 로터리 엔코더로 온도 설정할 값
+float prev_hum = 50;
+float prev_temp = 25.0;
 
 String SetString = "Set Temp:";
 String Thermal = "Temp:";
@@ -146,6 +148,12 @@ void loop() {
 
   humidity = dht.readHumidity();
   temperature = dht.readTemperature();
+  if (isnan(humidity)) {
+    humidity = prev_hum;
+  }
+  if (isnan(temperature)) {
+    temperature = prev_temp;
+  }
   if (temperature > setTemp)
     cooling = true;
   else
@@ -154,6 +162,10 @@ void loop() {
   Actuating();
   UpdateMonitor();
   delay(150);
+  if (!isnan(humidity))
+    prev_hum = humidity;
+  if (!isnan(temperature))
+    prev_temp = temperature;
 }
 
 /*       Module Initialization      */
@@ -219,6 +231,10 @@ void Sensing() {
     }
   }
 
+
+  /* GPS code 추가 */
+
+  /* end of code */
 }
 
 void Door_sensing() {
