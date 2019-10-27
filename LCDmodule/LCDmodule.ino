@@ -32,7 +32,7 @@
 #define DHTTYPE DHT11
 
 #define DEBUG 0                   // 로터리 엔코더 없어서 DEBUG용 
-LiquidCrystal_I2C Monitor(0x27, 16, 2);
+LiquidCrystal_I2C Monitor(0x27, 16, 4);
 MFRC522 rfid(SS_PIN, RST_PIN);
 Servo servo;
 SoftwareSerial GPS(14, 15);
