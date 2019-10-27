@@ -146,6 +146,7 @@ void loop() {
 
   humidity = dht.readHumidity();
   temperature = dht.readTemperature();
+  change = true;
   if (temperature > setTemp)
     cooling = true;
   else
@@ -209,6 +210,7 @@ void switchAct() {
 }
 
 void Sensing() {
+<<<<<<< HEAD
   change = true;
 
   if (door_open) {
@@ -217,8 +219,16 @@ void Sensing() {
       door_open = false;
       sec = 0;
     }
+=======
+  if (door_open) {
+    sec++;
+>>>>>>> 1bbce2ef7c6bcc40b7b76b9f616f9d801145de65
   }
 
+  if (sec > 4) {
+    sec = 0;
+    door_open = false;
+  }
 }
 
 void Door_sensing() {
@@ -244,6 +254,8 @@ void Door_sensing() {
       sec = 0;
       index = 0;
       count = 0;
+      reset = true;
+      inputPass = false;
     }
 
     if (key == '*') {
@@ -267,13 +279,21 @@ void Door_sensing() {
         Monitor.setCursor(0, 0);
         Monitor.print("Authoried access");
         door_open = true;
+<<<<<<< HEAD
         delay(1000);
+=======
+        delay(1500);
+>>>>>>> 1bbce2ef7c6bcc40b7b76b9f616f9d801145de65
       }
       else {
         Monitor.clear();
         Monitor.setCursor(0, 0);
         Monitor.print("Access denied");
+<<<<<<< HEAD
         delay(1000);
+=======
+        delay(1500);
+>>>>>>> 1bbce2ef7c6bcc40b7b76b9f616f9d801145de65
       }
       inputPass = false;
     }
@@ -298,6 +318,7 @@ void Door_sensing() {
       inputPass = false;
       count = 0;
       index = 0;
+      inputPass = false;
     }
   }
 
@@ -313,6 +334,7 @@ void UpdateMonitor() {
     Monitor.print("Password Reset");
     delay(3000);
     reset = false;
+<<<<<<< HEAD
   }
   if (inputPass) {
     Monitor.clear();
@@ -323,16 +345,24 @@ void UpdateMonitor() {
     }
     Monitor.print(temp_str);
     change = false;
+=======
+>>>>>>> 1bbce2ef7c6bcc40b7b76b9f616f9d801145de65
   }
   if (change) {
     if (set) {
       Monitor.clear();
       Monitor.setCursor(0, 0);
+<<<<<<< HEAD
       Monitor.print(Thermal + String(temperature));
       Monitor.write(0x01);
       Monitor.setCursor(0, 1);
       Monitor.print(SetString + String(setTemp));
       Monitor.write(0x01);
+=======
+      Monitor.print("Password: ");
+      for (int i = 0; i < index; i++)
+        Monitor.print("*");
+>>>>>>> 1bbce2ef7c6bcc40b7b76b9f616f9d801145de65
     }
     else {
       Monitor.clear();
