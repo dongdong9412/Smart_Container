@@ -32,7 +32,7 @@
 #define DHTTYPE DHT11
 
 #define DEBUG 0                   // 로터리 엔코더 없어서 DEBUG용 
-LiquidCrystal_I2C Monitor(0x27, 16, 2);
+LiquidCrystal_I2C Monitor(0x27, 16, 4);
 MFRC522 rfid(SS_PIN, RST_PIN);
 Servo servo;
 SoftwareSerial GPS(14, 15);
@@ -61,6 +61,9 @@ byte ondo[] = {
 volatile float temperature;              // DTH11 센서 온도 값
 volatile float humidity;                 // DTH11 센서 습도 값
 volatile float setTemp = 30.0;            // 로터리 엔코더로 온도 설정할 값
+volatile int counting = 0;              // 통신을 위한 counting 값
+float prev_hum = 50;
+float prev_temp = 25.0;
 
 String SetString = "Set Temp:";
 String Thermal = "Temp:";
@@ -118,7 +121,7 @@ void setup() {
   Dial_Init();
   Monitor_Init();
   DoorLock_Init();
-  // Timer_Init();
+  Timer_Init();
 
 }
 
@@ -142,20 +145,28 @@ void loop() {
     Serial.println(set);
   }
 #endif
-  if (!door_open)
-    Door_sensing();
-  else
-    ;
+  Door_sensing();
+
   humidity = dht.readHumidity();
   temperature = dht.readTemperature();
+  if (isnan(humidity)) {
+    humidity = prev_hum;
+  }
+  if (isnan(temperature)) {
+    temperature = prev_temp;
+  }
   if (temperature > setTemp)
     cooling = true;
   else
     cooling = false;
-  delay(200);
 
   Actuating();
   UpdateMonitor();
+  delay(150);
+  if (!isnan(humidity))
+    prev_hum = humidity;
+  if (!isnan(temperature))
+    prev_temp = temperature;
 }
 
 /*       Module Initialization      */
@@ -183,14 +194,13 @@ void DoorLock_Init() {
 }
 
 void Timer_Init() {
-  MsTimer2::set(1000, Sensing);
+  MsTimer2::set(5000, Sensing);
   MsTimer2::start();
 }
 /*       Module Initialization      */
 
 /* Sensing Function */
 void encoderAct() {
-  Serial.println("enter");
   if (set) {
     if (digitalRead(encoderDirectionPin)) {
       setTemp += 0.1;
@@ -212,18 +222,24 @@ void switchAct() {
 }
 
 void Sensing() {
-  sec++;
-
-  //  humidity = dht.readHumidity();
-  //  temperature = dht.readTemperature();
-
-
-
-  if (sec == 60) {
-    /* GPS read code */
-    wrong = 0;
+  change = true;
+  counting++;
+  if (door_open) {
+    sec++;
+    if (sec >= 2) {
+      door_open = false;
+      sec = 0;
+    }
   }
+  if(counting==12){
+    /* Communication code 추가*/
+    counting = 0;
+    }
 
+
+  /* GPS code 추가 */
+
+  /* end of code */
 }
 
 void Door_sensing() {
@@ -243,6 +259,10 @@ void Door_sensing() {
 
     if (key == '#') {
       correct = false;
+      inputPass = false;
+      door_open = false;
+      reset = true;
+      sec = 0;
       index = 0;
       count = 0;
     }
@@ -268,25 +288,35 @@ void Door_sensing() {
         Monitor.setCursor(0, 0);
         Monitor.print("Authoried access");
         door_open = true;
-        delay(3000);
+        delay(1000);
       }
       else {
         Monitor.clear();
         Monitor.setCursor(0, 0);
         Monitor.print("Access denied");
-        delay(3000);
+        delay(1000);
       }
+      inputPass = false;
     }
 
     if (index == 4) {
       if (count == 4) {
         correct = true;
+        Monitor.clear();
+        Monitor.setCursor(0, 0);
+        Monitor.print("Authoried access");
         door_open = true;
+        delay(1000);
       }
       else {
         correct = false;
+        Monitor.clear();
+        Monitor.setCursor(0, 0);
+        Monitor.print("Access denied");
+        delay(1000);
         door_open = false;
       }
+      inputPass = false;
       count = 0;
       index = 0;
     }
@@ -303,37 +333,40 @@ void UpdateMonitor() {
     Monitor.setCursor(0, 0);
     Monitor.print("Password Reset");
     delay(3000);
+    reset = false;
   }
-  if (change) {
-    if (inputPass) {
-      Monitor.clear();
-      Monitor.setCursor(0, 0);
-
+  if (inputPass) {
+    Monitor.clear();
+    Monitor.setCursor(0, 0);
+    String temp_str = "Password: ";
+    for (int i = 0; i < index; i++) {
+      temp_str += "*";
     }
-    else {
-      if (set) {
-        Monitor.clear();
-        Monitor.setCursor(0, 0);
-        Monitor.print(Thermal + String(temperature));
-        Monitor.write(0x01);
-        Monitor.setCursor(0, 1);
-        Monitor.print(SetString + String(setTemp));
-        Monitor.write(0x01);
-      }
-      else {
-        Monitor.clear();
-        Monitor.setCursor(0, 0);
-        Monitor.print(Thermal + String(temperature));
-        Monitor.write(0x01);
-        Monitor.setCursor(0, 1);
-        Monitor.print(Humidity + String(humidity));
-        Monitor.print("%");
-      }
-
-    }
+    Monitor.print(temp_str);
     change = false;
   }
+  if (change) {
+    if (set) {
+      Monitor.clear();
+      Monitor.setCursor(0, 0);
+      Monitor.print(Thermal + String(temperature));
+      Monitor.write(0x01);
+      Monitor.setCursor(0, 1);
+      Monitor.print(SetString + String(setTemp));
+      Monitor.write(0x01);
+    }
+    else {
+      Monitor.clear();
+      Monitor.setCursor(0, 0);
+      Monitor.print(Thermal + String(temperature));
+      Monitor.write(0x01);
+      Monitor.setCursor(0, 1);
+      Monitor.print(Humidity + String(humidity));
+      Monitor.print("%");
+    }
 
+  }
+  change = false;
 }
 
 void door_Lock_Unlock() {
