@@ -61,6 +61,7 @@ byte ondo[] = {
 volatile float temperature;              // DTH11 센서 온도 값
 volatile float humidity;                 // DTH11 센서 습도 값
 volatile float setTemp = 30.0;            // 로터리 엔코더로 온도 설정할 값
+volatile int counting = 0;              // 통신을 위한 counting 값
 float prev_hum = 50;
 float prev_temp = 25.0;
 
@@ -222,7 +223,7 @@ void switchAct() {
 
 void Sensing() {
   change = true;
-
+  counting++;
   if (door_open) {
     sec++;
     if (sec >= 2) {
@@ -230,6 +231,10 @@ void Sensing() {
       sec = 0;
     }
   }
+  if(counting==12){
+    /* Communication code 추가*/
+    counting = 0;
+    }
 
 
   /* GPS code 추가 */
