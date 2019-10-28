@@ -32,7 +32,7 @@
 #define DHTTYPE DHT11
 
 #define DEBUG 0                   // 로터리 엔코더 없어서 DEBUG용 
-LiquidCrystal_I2C Monitor(0x27, 16, 4);
+LiquidCrystal_I2C Monitor(0x27, 20, 4);
 MFRC522 rfid(SS_PIN, RST_PIN);
 Servo servo;
 SoftwareSerial GPS(14, 15);
@@ -372,8 +372,10 @@ void UpdateMonitor() {
 void door_Lock_Unlock() {
   if (door_open)
     servo.write(90);
+    /* door_unlock event 전송*/
   else
     servo.write(0);
+    /* door_lock event 전송*/
 }
 
 void LED() {
