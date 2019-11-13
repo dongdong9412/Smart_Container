@@ -21,7 +21,7 @@
 #define servoPin 6
 
 //펠티어
-#define Mosfet 9
+#define Relay 9
 
 //RFID
 #define SS_PIN 53
@@ -115,7 +115,7 @@ void setup() {
   // put your setup code here, to run once:
 
   Serial.begin(9600);
-  pinMode(Mosfet, OUTPUT);
+  pinMode(Relay, OUTPUT);
   GPS.begin(9600);
 
   Dial_Init();
@@ -231,13 +231,15 @@ void Sensing() {
       sec = 0;
     }
   }
-  if(counting==12){
+  if (counting == 60) {
+
+    if (GPS.available()) {   /* GPS code */
+      Serial.write(GPS.read()); // 변수로 저장 가능한지 다원이랑 해보기
+    }
     /* Communication code 추가*/
     counting = 0;
-    }
+  }
 
-
-  /* GPS code 추가 */
 
   /* end of code */
 }
@@ -372,10 +374,10 @@ void UpdateMonitor() {
 void door_Lock_Unlock() {
   if (door_open)
     servo.write(90);
-    /* door_unlock event 전송*/
+  /* door_unlock event 전송*/
   else
     servo.write(0);
-    /* door_lock event 전송*/
+  /* door_lock event 전송*/
 }
 
 void LED() {
@@ -389,9 +391,9 @@ void LED() {
 
 void Cooler() {
   if (cooling)
-    digitalWrite(Mosfet, HIGH);
+    digitalWrite(Relay, HIGH);
   else
-    digitalWrite(Mosfet, LOW);
+    digitalWrite(Relay, LOW);
 }
 
 void Actuating() {
