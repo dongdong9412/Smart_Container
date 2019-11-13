@@ -129,6 +129,7 @@ void setup() {
   Monitor_Init();
   DoorLock_Init();
   Timer_Init();
+  DIO_Init();
 
 }
 
