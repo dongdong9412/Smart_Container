@@ -17,6 +17,9 @@
 #define encoderDirectionPin 17
 #define encoderSwitchPin 18
 
+//Door_sensor
+#define doorSensorPin A2
+
 //SERVO
 #define servoPin 6
 
@@ -70,6 +73,7 @@ String Thermal = "Temp:";
 String Humidity = "Humidity:";
 
 volatile int sec = 0;
+volatile int close_count = 0;
 
 //LOCK
 int pos = 0;
@@ -194,7 +198,7 @@ void DoorLock_Init() {
 }
 
 void Timer_Init() {
-  MsTimer2::set(5000, Sensing);
+  MsTimer2::set(1000, Sensing);
   MsTimer2::start();
 }
 /*       Module Initialization      */
@@ -225,20 +229,22 @@ void Sensing() {
   change = true;
   counting++;
   if (door_open) {
-    sec++;
-    if (sec >= 2) {
+    if (analogRead(doorSensorPin) <= 600) {
+      close_count++;
+    }
+    if (close_count >= 3) {
       door_open = false;
-      sec = 0;
+      close_count = 0;
     }
   }
-  if (counting == 60) {
-
+  if (counting == 300) {
     if (GPS.available()) {   /* GPS code */
       Serial.write(GPS.read()); // 변수로 저장 가능한지 다원이랑 해보기
     }
     /* Communication code 추가*/
     counting = 0;
   }
+
 
 
   /* end of code */
