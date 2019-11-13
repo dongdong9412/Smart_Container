@@ -24,7 +24,10 @@
 #define servoPin 6
 
 //펠티어
-#define Relay 9
+#define Mosfet 9
+
+//조명
+#define Relay 3
 
 //RFID
 #define SS_PIN 53
@@ -95,6 +98,7 @@ byte colPins[COLS] = {36, 37, 38}; //connect to the column pinouts of the keypad
 Keypad keypad = Keypad( makeKeymap(keys), rowPins, colPins, ROWS, COLS );
 
 /* Module Initialization */
+void DIO_Init();                  // 기타 Pin 설정
 void Dial_Init();                 // Pin 설정 함수
 void Monitor_Init();              // LCD 초기 설정 함수
 void DoorLock_Init();             // 잠금 시스템 설정 함수
@@ -119,7 +123,6 @@ void setup() {
   // put your setup code here, to run once:
 
   Serial.begin(9600);
-  pinMode(Relay, OUTPUT);
   GPS.begin(9600);
 
   Dial_Init();
@@ -174,6 +177,10 @@ void loop() {
 }
 
 /*       Module Initialization      */
+void DIO_Init() {
+  pinMode(Mosfet, OUTPUT);
+  pinMode(Relay, OUTPUT);
+}
 void Dial_Init() {
   pinMode(encoderInterruptPin, INPUT_PULLUP);
   pinMode(encoderDirectionPin, INPUT_PULLUP);
@@ -232,7 +239,7 @@ void Sensing() {
     if (analogRead(doorSensorPin) <= 600) {
       close_count++;
     }
-    if (close_count >= 3) {
+    if (close_count >= 5) {
       door_open = false;
       close_count = 0;
     }
@@ -388,18 +395,18 @@ void door_Lock_Unlock() {
 
 void LED() {
   if (door_open)
-    ;
+    digitalWrite(Relay, HIGH);
   /* LED On code */
   else
-    ;
+    digitalWrite(Relay, LOW);
   /* LED Off code */
 }
 
 void Cooler() {
   if (cooling)
-    digitalWrite(Relay, HIGH);
+    digitalWrite(Mosfet, HIGH);
   else
-    digitalWrite(Relay, LOW);
+    digitalWrite(Mosfet, LOW);
 }
 
 void Actuating() {
