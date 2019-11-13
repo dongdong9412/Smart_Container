@@ -100,3 +100,9 @@ MsTimer 5초 주기에서 1초 주기로 변경.
 
 조명 제어를 위해 릴레이 코드 추가.
 기존 Mosfet 코드 복구.
+
+
+
+- DIO_Init() 오류 수정
+
+Setup에 DIO_Init() 추가
