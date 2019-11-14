@@ -243,6 +243,12 @@ void Sensing() {
       Serial.write(GPS.read()); // 변수로 저장 가능한지 다원이랑 해보기
     }
     /* Communication code 추가*/
+    Serial.println(temperature);
+    delay(500);
+    Serial.println(humidity);
+    delay(500);
+    Serial.println(setTemp);
+    delay(500);
     counting = 0;
   }
 
@@ -297,6 +303,12 @@ void Door_sensing() {
         Monitor.setCursor(0, 0);
         Monitor.print("Authoried access");
         door_open = true;
+        if (content.substring(1) == "76 F5 3B F8") {
+          Serial.println("76 F5 3B F8");
+        }
+        else if (content.substring(1) == "F902 B9 55") {
+          Serial.println("F902 B9 55");
+        }
         delay(1000);
       }
       else {
@@ -379,14 +391,16 @@ void UpdateMonitor() {
 }
 
 void door_Lock_Unlock() {
-  if (door_open){
+  if (door_open) {
     servo.write(90);
     light = true;
+    Serial.println("LOCK");
   }
   /* door_unlock event 전송*/
-  else{
+  else {
     servo.write(0);
     light = false;
+    Serial.println("UNLOCK");
   }
   /* door_lock event 전송*/
 }
@@ -401,10 +415,14 @@ void LED() {
 }
 
 void Cooler() {
-  if (cooling)
+  if (cooling) {
     digitalWrite(Mosfet, HIGH);
-  else
+    Serial.println("ON");
+  }
+  else {
     digitalWrite(Mosfet, LOW);
+    Serial.println("OFF");
+  }
 }
 
 void Actuating() {
