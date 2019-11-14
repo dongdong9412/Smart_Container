@@ -18,7 +18,7 @@
 #define encoderSwitchPin 18
 
 //Door_sensor
-#define doorSensorPin A2
+// #define doorSensorPin A2
 
 //SERVO
 #define servoPin 6
@@ -237,15 +237,7 @@ void switchAct() {
 void Sensing() {
   change = true;
   counting++;
-  if (door_open) {
-    if (analogRead(doorSensorPin) <= 600) {
-      close_count++;
-    }
-    if (close_count >= 5) {
-      light = false;
-      close_count = 0;
-    }
-  }
+
   if (counting == 300) {
     if (GPS.available()) {   /* GPS code */
       Serial.write(GPS.read()); // 변수로 저장 가능한지 다원이랑 해보기
