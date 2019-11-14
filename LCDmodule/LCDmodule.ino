@@ -52,6 +52,7 @@ volatile bool door_open = false;
 volatile bool reset = false;
 volatile bool cooling = false;
 volatile bool inputPass = false;
+volatile bool light = false;
 
 byte ondo[] = {
   B11000,
@@ -241,7 +242,7 @@ void Sensing() {
       close_count++;
     }
     if (close_count >= 5) {
-      door_open = false;
+      light = false;
       close_count = 0;
     }
   }
@@ -386,16 +387,20 @@ void UpdateMonitor() {
 }
 
 void door_Lock_Unlock() {
-  if (door_open)
+  if (door_open){
     servo.write(90);
+    light = true;
+  }
   /* door_unlock event 전송*/
-  else
+  else{
     servo.write(0);
+    light = false;
+  }
   /* door_lock event 전송*/
 }
 
 void LED() {
-  if (door_open)
+  if (light)
     digitalWrite(Relay, HIGH);
   /* LED On code */
   else
