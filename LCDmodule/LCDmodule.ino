@@ -394,13 +394,12 @@ void door_Lock_Unlock() {
   if (door_open) {
     servo.write(90);
     light = true;
-    Serial.println("LOCK");
+    Serial.println("UNLOCK");
   }
   /* door_unlock event 전송*/
   else {
     servo.write(0);
     light = false;
-    Serial.println("UNLOCK");
   }
   /* door_lock event 전송*/
 }
@@ -421,7 +420,6 @@ void Cooler() {
   }
   else {
     digitalWrite(Mosfet, LOW);
-    Serial.println("OFF");
   }
 }
 
